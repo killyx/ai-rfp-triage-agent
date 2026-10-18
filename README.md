@@ -8,7 +8,9 @@
 
 A production-grade reference architecture for **autonomous B2B Request for Proposal (RFP) qualification, RAG-grounded technical estimation, and Human-in-the-Loop (HITL) commercial sign-off**. Built as a flagship portfolio system for **AI Automation Specialist / Staff AI Solutions Engineer** roles.
 
-![Interactive AI RFP & Lead Triage Simulator Preview](docs/dashboard_preview.png)
+![Animated E2E Walkthrough — AI RFP & Lead Triage Simulator](docs/demo_walkthrough.gif)
+
+> 🎥 **[Download Full HD Walkthrough Video (`docs/demo_walkthrough.mp4`)](docs/demo_walkthrough.mp4)** | 🖼️ **[High-Res Dashboard Screenshot (`docs/dashboard_preview.png`)](docs/dashboard_preview.png)**
 
 ---
 
