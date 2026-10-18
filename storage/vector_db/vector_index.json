@@ -1,0 +1,12 @@
+{
+  "engine": "ApexVector-Hybrid-Embedding-v1",
+  "vocabulary_size": 248,
+  "indexed_case_studies": 5,
+  "case_study_ids": [
+    "CS-FIN-001",
+    "CS-LEGAL-002",
+    "CS-LOG-003",
+    "CS-MED-004",
+    "CS-SAAS-005"
+  ]
+}

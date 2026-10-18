@@ -1,0 +1,550 @@
+{
+  "name": "Autonomous B2B RFP & Lead Triage Agent (Model Cascading + RAG + HITL)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rfp-ingest",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000001",
+      "name": "Webhook: Ingest RFP (PDF / Email)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        360
+      ],
+      "webhookId": "rfp-ingest-webhook-01"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://app:8000/api/triage/text",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ raw_text: $json.body.raw_text || $json.raw_text, source_name: $json.body.source_name || 'n8n_webhook.txt' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000002",
+      "name": "FastAPI Service: Parse PDF & Validate Schema",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        430,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Extract B2B RFP parameters into strict JSON Schema: client_name, company, estimated_budget_usd, timeline_weeks, required_tech_stack, scope_summary, missing_information_flags."
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.raw_text }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0,
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000003",
+      "name": "OpenAI Tier-1: Fast Extraction (gpt-4o-mini Structured Outputs)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.3,
+      "position": [
+        690,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve",
+        "chromaCollection": {
+          "__rl": true,
+          "value": "apexvector_case_studies",
+          "mode": "list"
+        },
+        "topK": 3,
+        "options": {}
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000004",
+      "name": "Vector Store RAG: Retrieve Case Studies & Verify Tech Stack",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreChroma",
+      "typeVersion": 1,
+      "position": [
+        960,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.scoring.classification }}",
+                    "rightValue": "HIGH_FIT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "leftValue": "={{ $json.scoring.total_score }}",
+                    "rightValue": 75,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HIGH_FIT (>75)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.scoring.classification }}",
+                    "rightValue": "AMBIGUOUS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AMBIGUOUS (Discovery)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.scoring.classification }}",
+                    "rightValue": "LOW_FIT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "LOW_FIT (<$10k / Mismatch)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000005",
+      "name": "Switch: Qualification & $10k Policy Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1220,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a Staff AI Solutions Architect. Generate a tailored B2B commercial proposal with estimated price bands, recommended squad composition, and citations to the top matched RAG case studies."
+            },
+            {
+              "role": "user",
+              "content": "={{ JSON.stringify($json.extraction) }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000006",
+      "name": "OpenAI Tier-2: High-Fit Proposal Generator (gpt-4o)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Generate a concise discovery clarification email asking the client to specify missing_information_flags (budget envelope, timeline, ERP scope) while citing relevant logistics/AI case studies."
+            },
+            {
+              "role": "user",
+              "content": "={{ JSON.stringify($json.extraction) }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000007",
+      "name": "OpenAI Tier-1: Ambiguous Brief Clarification (gpt-4o-mini)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Generate a polite decline email explaining our $10,000 USD minimum custom engineering threshold and recommending practical no-code/low-code alternatives (Bubble, Sharetribe, Shopify)."
+            },
+            {
+              "role": "user",
+              "content": "={{ JSON.stringify($json.extraction) }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000008",
+      "name": "OpenAI Tier-1: Low-Fit Polite Decline (gpt-4o-mini)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#sales-rfp-triage",
+          "mode": "name"
+        },
+        "messageType": "block",
+        "blocksUi": "={{ JSON.stringify($json.slack_payload.blocks) }}",
+        "text": "={{ $json.slack_payload.text }}"
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000009",
+      "name": "Slack Block Kit: Notify Solutions Architect (HITL Card)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1820,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {
+          "webhookSuffix": "lead-approve"
+        }
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000010",
+      "name": "Wait for Human-in-the-Loop Approval (/api/lead/approve)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2080,
+        360
+      ],
+      "webhookId": "hitl-approval-gate-01"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "reject",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000011",
+      "name": "IF: Human Reviewer Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2330,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://app:8000/api/lead/approve",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_id: $json.body.lead_id, action: $json.body.action || 'approve', reviewer_name: $json.body.reviewer_name || 'VP of Engineering', edited_draft_markdown: $json.body.edited_draft_markdown }) }}"
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000012",
+      "name": "HubSpot CRM & Outbound Dispatch: Commit Approved Proposal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2600,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://app:8000/api/lead/approve",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_id: $json.body.lead_id, action: 'reject', reviewer_name: $json.body.reviewer_name || 'VP of Engineering', reviewer_notes: 'Rejected in Slack HITL Gate' }) }}"
+      },
+      "id": "b1f4c001-1111-4000-8000-000000000013",
+      "name": "HubSpot CRM Audit: Log Rejection & Suppress Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2600,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Ingest RFP (PDF / Email)": {
+      "main": [
+        [
+          {
+            "node": "FastAPI Service: Parse PDF & Validate Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FastAPI Service: Parse PDF & Validate Schema": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Tier-1: Fast Extraction (gpt-4o-mini Structured Outputs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Tier-1: Fast Extraction (gpt-4o-mini Structured Outputs)": {
+      "main": [
+        [
+          {
+            "node": "Vector Store RAG: Retrieve Case Studies & Verify Tech Stack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store RAG: Retrieve Case Studies & Verify Tech Stack": {
+      "main": [
+        [
+          {
+            "node": "Switch: Qualification & $10k Policy Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Qualification & $10k Policy Router": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Tier-2: High-Fit Proposal Generator (gpt-4o)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI Tier-1: Ambiguous Brief Clarification (gpt-4o-mini)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI Tier-1: Low-Fit Polite Decline (gpt-4o-mini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Tier-2: High-Fit Proposal Generator (gpt-4o)": {
+      "main": [
+        [
+          {
+            "node": "Slack Block Kit: Notify Solutions Architect (HITL Card)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Tier-1: Ambiguous Brief Clarification (gpt-4o-mini)": {
+      "main": [
+        [
+          {
+            "node": "Slack Block Kit: Notify Solutions Architect (HITL Card)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Tier-1: Low-Fit Polite Decline (gpt-4o-mini)": {
+      "main": [
+        [
+          {
+            "node": "Slack Block Kit: Notify Solutions Architect (HITL Card)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Block Kit: Notify Solutions Architect (HITL Card)": {
+      "main": [
+        [
+          {
+            "node": "Wait for Human-in-the-Loop Approval (/api/lead/approve)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Human-in-the-Loop Approval (/api/lead/approve)": {
+      "main": [
+        [
+          {
+            "node": "IF: Human Reviewer Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Human Reviewer Approved?": {
+      "main": [
+        [
+          {
+            "node": "HubSpot CRM & Outbound Dispatch: Commit Approved Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HubSpot CRM Audit: Log Rejection & Suppress Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "apexvector-rfp-triage-agent-v1"
+  }
+}

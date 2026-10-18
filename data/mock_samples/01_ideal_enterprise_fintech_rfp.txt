@@ -1,0 +1,31 @@
+REQUEST FOR PROPOSAL (RFP) — CONFIDENTIAL
+Document ID: RFP-2026-NVF-089
+Date: October 18, 2026
+
+1. CLIENT & ORGANIZATION OVERVIEW
+Client Contact: Marcus Vance, VP of Engineering
+Company: NovaFin Capital Partners Ltd. (Series B Commercial FinTech, London / Zurich)
+Email: m.vance@novafincapital.io
+
+2. EXECUTIVE SUMMARY & PROJECT OBJECTIVE
+NovaFin Capital processes over 1,800 commercial credit and KYB (Know Your Business) onboarding packages per month. Currently, our compliance analysts manually review 80-to-150 page PDF packages (audited financial statements, corporate registry filings, and debt schedules), which takes an average of 9 hours per application.
+
+We are seeking an experienced AI & Cloud Engineering partner to architect and deliver an Autonomous Document Intelligence & Credit Triage Platform with a Human-in-the-Loop (HITL) compliance approval workbench.
+
+3. CORE FUNCTIONAL SCOPE
+- High-throughput PDF ingestion pipeline supporting complex financial tables and multi-column corporate filings (PyMuPDF / pdfplumber).
+- LLM Extraction Engine utilizing OpenAI Structured Outputs (JSON Schema) to extract 45+ standardized credit risk indicators, UBO entities, and financial ratios.
+- Semantic RAG Knowledge Base (PostgreSQL with pgvector or ChromaDB) indexing our historical credit policy manuals and past underwriting decisions.
+- Real-time Confidence Scoring & Routing: applications scoring above threshold route directly to Slack Block Kit & our React Underwriter Workbench for 1-click sign-off before syncing to HubSpot CRM.
+- Full SOC2-ready audit logging and observability.
+
+4. REQUIRED TECHNOLOGY STACK
+- Backend: Python 3.11+, FastAPI, Pydantic v2, PostgreSQL, pgvector, Redis
+- Orchestration & AI: OpenAI API (gpt-4o / gpt-4o-mini cascading), n8n workflow automation
+- Frontend Workbench: React, TypeScript, TailwindCSS
+- Cloud Infrastructure: AWS (ECS Fargate, RDS), Docker, Terraform
+
+5. BUDGET & TIMELINE EXPECTATIONS
+- Allocated Engineering Budget: $85,000 USD (approved by Investment Committee, expandable to $110,000 USD for Phase 2 ERP integrations).
+- Target Delivery Timeline: 14 Weeks (2-week architecture & discovery sprint + 12-week iterative production rollout).
+- Desired Kickoff: Within 3 weeks of proposal acceptance.

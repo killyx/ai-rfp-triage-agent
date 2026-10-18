@@ -1,0 +1,185 @@
+{
+  "company_profile": {
+    "name": "ApexVector Labs — Enterprise AI & Cloud Engineering",
+    "positioning": "Boutique AI & Cloud Software House specializing in production LLM agents, FinTech/RegTech backends, and high-throughput data platforms.",
+    "minimum_budget_usd": 10000,
+    "preferred_budget_usd": 35000,
+    "minimum_timeline_weeks": 4,
+    "standard_sprint_weeks": 2,
+    "pricing_policy": {
+      "currency": "USD",
+      "engagement_models": [
+        "Time & Materials with Sprint Cap",
+        "Fixed-Scope Discovery Phase ($6,500 / 2 weeks) + Milestone Delivery",
+        "Dedicated AI Pod (2-4 Engineers)"
+      ],
+      "low_budget_policy": "Strictly decline custom engineering below $10,000 USD. Recommend no-code/low-code alternatives (Bubble, Webflow, Zapier templates) or certified freelancer collectives."
+    }
+  },
+  "rate_card": [
+    {
+      "role": "Staff AI / LLM Systems Architect",
+      "hourly_rate_usd": 145,
+      "weekly_allocation_usd": 5800,
+      "responsibilities": "RAG architecture, agent orchestration, evals, security guardrails, model cascading."
+    },
+    {
+      "role": "Senior Python Backend Engineer (FastAPI / AsyncIO)",
+      "hourly_rate_usd": 115,
+      "weekly_allocation_usd": 4600,
+      "responsibilities": "API design, microservices, PostgreSQL/pgvector, Celery/Kafka pipelines."
+    },
+    {
+      "role": "Senior Frontend / Fullstack Engineer (React / Next.js / TypeScript)",
+      "hourly_rate_usd": 110,
+      "weekly_allocation_usd": 4400,
+      "responsibilities": "Executive dashboards, real-time streaming UI, design systems."
+    },
+    {
+      "role": "Cloud & DevOps Engineer (AWS / GCP / Kubernetes / Terraform)",
+      "hourly_rate_usd": 125,
+      "weekly_allocation_usd": 5000,
+      "responsibilities": "SOC2/ISO27001 infrastructure, CI/CD, observability, VPC peering."
+    },
+    {
+      "role": "QA & AI Evaluation Engineer",
+      "hourly_rate_usd": 90,
+      "weekly_allocation_usd": 3600,
+      "responsibilities": "Automated E2E testing, LLM hallucination regression suites, load testing."
+    }
+  ],
+  "supported_tech_stack": {
+    "ai_and_data": [
+      "OpenAI",
+      "Anthropic Claude",
+      "LangChain",
+      "LlamaIndex",
+      "n8n",
+      "ChromaDB",
+      "pgvector",
+      "Qdrant",
+      "PyMuPDF",
+      "Pydantic",
+      "RAG",
+      "Structured Outputs"
+    ],
+    "backend": [
+      "Python",
+      "FastAPI",
+      "Django",
+      "Node.js",
+      "TypeScript",
+      "Go",
+      "PostgreSQL",
+      "Redis",
+      "Kafka",
+      "RabbitMQ",
+      "GraphQL",
+      "REST API"
+    ],
+    "frontend": [
+      "React",
+      "Next.js",
+      "TypeScript",
+      "TailwindCSS",
+      "Vite"
+    ],
+    "cloud_and_devops": [
+      "AWS",
+      "GCP",
+      "Azure",
+      "Docker",
+      "Kubernetes",
+      "Terraform",
+      "GitHub Actions",
+      "Langfuse",
+      "Prometheus"
+    ]
+  },
+  "unsupported_tech_stack": [
+    "WordPress",
+    "WooCommerce",
+    "Shopify Liquid Themes",
+    "Magento",
+    "PHP Legacy",
+    "COBOL",
+    "Unity3D",
+    "Unreal Engine",
+    "Native iOS Objective-C",
+    "Blockchain Smart Contracts Solidity"
+  ],
+  "case_studies": [
+    {
+      "id": "CS-FIN-001",
+      "title": "Automated KYB & Credit Underwriting Document Intelligence Platform",
+      "industry": "FinTech / Commercial Banking",
+      "client_region": "UK & DACH",
+      "budget_usd": 92000,
+      "timeline_weeks": 16,
+      "tech_stack": ["Python", "FastAPI", "OpenAI", "pgvector", "React", "TypeScript", "AWS", "Docker", "PostgreSQL"],
+      "summary": "Built an enterprise document ingestion and RAG verification pipeline for a Series B commercial lender. Extracted financial covenants and KYC/KYB entities from 200-page PDF credit files using Structured Outputs and a Human-in-the-Loop compliance workbench.",
+      "business_outcomes": [
+        "Reduced underwriting document review time from 14 hours to 11 minutes per application",
+        "Achieved 99.2% field extraction precision via dual-model verification and confidence thresholds",
+        "Saved $420,000 annually in manual analyst back-office operations"
+      ]
+    },
+    {
+      "id": "CS-LEGAL-002",
+      "title": "Enterprise RFP & Vendor Procurement Triage Automation",
+      "industry": "B2B SaaS / LegalTech",
+      "client_region": "North America",
+      "budget_usd": 68000,
+      "timeline_weeks": 12,
+      "tech_stack": ["Python", "FastAPI", "n8n", "ChromaDB", "OpenAI", "React", "TailwindCSS", "Slack Block Kit", "HubSpot API"],
+      "summary": "Designed an autonomous RFP qualification engine integrated with n8n, HubSpot CRM, and Slack Block Kit. Automatically parsed incoming PDF security questionnaires and RFP briefs, matched answers against historical proposals via vector search, and routed high-value deals for 1-click VP approval.",
+      "business_outcomes": [
+        "Cut RFP first-response turnaround from 36 hours to under 3 minutes",
+        "Increased sales engineering win-rate by 28% on deals above $50k",
+        "Reduced LLM API spend by 79% using cascading gpt-4o-mini extraction before gpt-4o synthesis"
+      ]
+    },
+    {
+      "id": "CS-LOG-003",
+      "title": "AI-Driven Supply Chain Exception & Freight Claims Orchestrator",
+      "industry": "Logistics & Supply Chain",
+      "client_region": "EU",
+      "budget_usd": 115000,
+      "timeline_weeks": 20,
+      "tech_stack": ["Python", "FastAPI", "PostgreSQL", "pgvector", "Kafka", "React", "AWS", "Kubernetes", "OpenAI"],
+      "summary": "Developed a real-time freight disruption agent that ingests carrier PDFs, bills of lading, and ERP webhooks to classify delay penalties and draft automated claim settlements with supervisor approval gates.",
+      "business_outcomes": [
+        "Processed 45,000+ monthly shipping documents with 94% straight-through processing",
+        "Recovered $1.1M in SLA penalty claims within the first 6 months"
+      ]
+    },
+    {
+      "id": "CS-MED-004",
+      "title": "HIPAA-Compliant Clinical Trial Protocol RAG Assistant",
+      "industry": "HealthTech / Biotech",
+      "client_region": "USA",
+      "budget_usd": 78000,
+      "timeline_weeks": 14,
+      "tech_stack": ["Python", "FastAPI", "Qdrant", "OpenAI", "Next.js", "TypeScript", "AWS", "Terraform"],
+      "summary": "Engineered a citation-backed RAG search portal over 15,000 clinical study protocols and FDA regulatory PDFs with strict role-based access control and audit logging.",
+      "business_outcomes": [
+        "Zero ungrounded hallucinations in regulatory audits due to strict JSON schema citation enforcement",
+        "Accelerated clinical site onboarding by 40%"
+      ]
+    },
+    {
+      "id": "CS-SAAS-005",
+      "title": "Multi-Tenant B2B Usage Metering & Automated Invoicing Engine",
+      "industry": "Cloud Infrastructure SaaS",
+      "client_region": "Global",
+      "budget_usd": 54000,
+      "timeline_weeks": 10,
+      "tech_stack": ["Python", "FastAPI", "PostgreSQL", "Redis", "React", "Docker", "GCP"],
+      "summary": "Architected a high-throughput event ingestion service processing 10k events/sec for usage-based AI token billing and automated Stripe/HubSpot reconciliation.",
+      "business_outcomes": [
+        "99.99% uptime SLA with sub-40ms p95 API latency",
+        "Eliminated 100% of manual end-of-month billing spreadsheet reconciliations"
+      ]
+    }
+  ]
+}

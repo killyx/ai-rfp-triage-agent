@@ -1,0 +1,18 @@
+Subject: Partnership inquiry — AI Automation for European Logistics
+From: Elena Rostova <e.rostova@transcontinental-freight.eu>
+Company: TransContinental Freight Group
+
+Hello ApexVector Labs,
+
+I came across your case studies on LinkedIn while researching AI engineering partners in Europe.
+
+We operate a mid-sized freight forwarding network across Germany, Poland, and the Netherlands. Right now, our dispatchers spend way too much time dealing with incoming carrier emails, customs PDFs, and scheduling updates in our ERP. We want to "implement AI agents and RAG" to automate our back-office operations and build an internal dashboard for our operations directors.
+
+We haven't finalized the exact technical stack yet (our internal IT team uses some Python and PostgreSQL, and we use Slack internally), and we don't have a fixed budget number or timeline locked down yet—it depends on what your team recommends for an initial MVP versus a full rollout.
+
+Could you let us know what information you need from us to put together a ballpark estimate, and share if you have built anything similar in logistics?
+
+Warm regards,
+Elena Rostova
+Director of Operational Excellence
+TransContinental Freight Group

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ app_name }} — Interactive Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script type="module">
+    // Feature detect 'commandForElement' on HTMLButtonElement.prototype per modern-web-guidance
+    if (!('commandForElement' in HTMLButtonElement.prototype)) {
+      import('https://esm.run/invokers-polyfill').catch(() => {});
+    }
+  </script>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Executive Header -->
+  <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <svg class="w-6 h-6 text-white" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">
+            Autonomous B2B RFP &amp; Lead Triage Agent
+          </h1>
+          <p class="text-xs text-slate-400">
+            n8n Orchestration • OpenAI Structured Outputs • RAG Knowledge Base • Slack Block Kit HITL Gate
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5 text-xs">
+        <span class="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-300">
+          Min Policy: <strong class="text-emerald-400">${{ "{:,}".format(min_budget_usd) }}+ USD</strong>
+        </span>
+        <span class="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-300">
+          Cascade: <code class="text-indigo-400">{{ extraction_model }}</code> → <code class="text-cyan-400">{{ proposal_model }}</code>
+        </span>
+        <a href="/docs" target="_blank" rel="noopener" class="px-3 py-1 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/30 transition">
+          OpenAPI Docs ↗
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workbench Grid -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Top Scenario Presets Bar -->
+    <section aria-labelledby="presets-heading" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <h2 id="presets-heading" class="text-sm font-semibold uppercase tracking-wider text-indigo-400">
+            1-Click Demo Scenarios (Portfolio Presets)
+          </h2>
+          <p class="text-xs text-slate-400">
+            Click a scenario below to execute the full Ingestion → RAG → Scoring → Slack HITL pipeline in real time.
+          </p>
+        </div>
+        <span id="pipeline-status-pill" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+          Ready for Ingestion
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {% for sample in samples %}
+        <button
+          type="button"
+          data-preset-id="{{ sample.id }}"
+          class="preset-trigger text-left p-3.5 rounded-xl bg-slate-950/90 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/50 transition group flex flex-col justify-between"
+        >
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <span class="text-xs font-bold px-2 py-0.5 rounded
+                {% if sample.badge == 'HIGH_FIT' %}bg-emerald-500/15 text-emerald-400 border border-emerald-500/30
+                {% elif sample.badge == 'AMBIGUOUS' %}bg-amber-500/15 text-amber-400 border border-amber-500/30
+                {% else %}bg-rose-500/15 text-rose-400 border border-rose-500/30{% endif %}">
+                {{ sample.badge }}
+              </span>
+              <span class="text-[11px] font-mono text-slate-400 group-hover:text-indigo-300">
+                Run Pipeline →
+              </span>
+            </div>
+            <p class="text-sm font-semibold text-white mb-1">{{ sample.label }}</p>
+            <p class="text-xs text-slate-400 line-clamp-2">{{ sample.description }}</p>
+          </div>
+        </button>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- 12-Column Split: Left = Ingestion & Extraction/RAG, Right = Scoring, Slack HITL Card & CRM Log -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column (5 cols): Ingestion + Structured JSON + RAG Matches -->
+      <div class="lg:col-span-5 space-y-6">
+
+        <!-- Ingestion Form Card -->
+        <section aria-labelledby="ingest-heading" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 id="ingest-heading" class="text-sm font-semibold uppercase tracking-wider text-slate-200">
+              Step 1: RFP Ingestion (Text or PDF)
+            </h2>
+            <span class="text-xs font-mono text-slate-400">PyMuPDF / pdfplumber</span>
+          </div>
+
+          <form id="text-triage-form" class="space-y-3">
+            <div>
+              <label for="rfp-raw-textarea" class="block text-xs font-medium text-slate-300 mb-1">
+                Paste Incoming Client Email or RFP Brief:
+              </label>
+              <textarea
+                id="rfp-raw-textarea"
+                name="raw_text"
+                rows="6"
+                required
+                placeholder="Paste B2B project inquiry, budget, timeline, and required tech stack..."
+                class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-xs text-slate-200 p-3 font-mono custom-scroll"
+              ></textarea>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="submit"
+                id="analyze-text-btn"
+                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition"
+              >
+                Execute AI Triage Pipeline
+              </button>
+
+              <label for="pdf-file-input" class="cursor-pointer px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition">
+                <span>Upload RFP PDF Attachment</span>
+                <input id="pdf-file-input" type="file" accept=".pdf,application/pdf" class="sr-only">
+              </label>
+            </div>
+          </form>
+        </section>
+
+        <!-- Extracted Structured Output JSON Card -->
+        <section aria-labelledby="json-heading" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 id="json-heading" class="text-sm font-semibold uppercase tracking-wider text-slate-200">
+              Step 2: Structured Output (JSON Schema)
+            </h2>
+            <span id="extraction-model-badge" class="text-xs font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
+              gpt-4o-mini
+            </span>
+          </div>
+
+          <pre tabindex="0" class="rounded-xl bg-slate-950 border border-slate-800 p-3.5 text-xs font-mono text-cyan-300 overflow-x-auto max-h-72 custom-scroll"><code id="extracted-json-code">// Select a demo scenario or submit an RFP above to inspect the validated Pydantic RFPExtraction JSON...</code></pre>
+        </section>
+
+        <!-- RAG Vector Store Retrieval Card -->
+        <section aria-labelledby="rag-heading" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 id="rag-heading" class="text-sm font-semibold uppercase tracking-wider text-slate-200">
+              Step 3: RAG Portfolio &amp; Tech Stack Match
+            </h2>
+            <span id="rag-top-sim-badge" class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+              Similarity: --
+            </span>
+          </div>
+
+          <div id="tech-verification-box" class="space-y-2 text-xs">
+            <p class="text-slate-400">Tech stack verification and historical case study similarity will appear here.</p>
+          </div>
+
+          <div id="rag-case-studies-list" class="space-y-2.5"></div>
+        </section>
+      </div>
+
+      <!-- Right Column (7 cols): Scoring & Model Cascading + Interactive Slack Block Kit + HubSpot CRM Audit Log -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Lead Scoring & Model Cascading Telemetry Card -->
+        <section aria-labelledby="scoring-heading" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 id="scoring-heading" class="text-sm font-semibold uppercase tracking-wider text-slate-200">
+                Step 4: Multi-Factor Lead Scoring &amp; Model Cascading ROI
+              </h2>
+              <p id="scoring-reasoning-text" class="text-xs text-slate-400 mt-0.5">
+                Awaiting lead ingestion...
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="classification-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                UNCLASSIFIED
+              </span>
+              <span id="total-score-badge" class="text-xl font-extrabold font-mono text-white">
+                --/100
+              </span>
+            </div>
+          </div>
+
+          <!-- Dynamic CSS custom property progress bar -->
+          <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div id="score-progress-bar" class="h-full score-progress-fill" style="--score-percent: 0%; --score-hue: 150;"></div>
+          </div>
+
+          <!-- 4 Score Pillars + Model Cascading Cost Metric -->
+          <dl class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center">
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+              <dt class="text-[11px] text-slate-400">Budget Fit</dt>
+              <dd id="score-budget" class="text-sm font-bold font-mono text-white mt-0.5">--/35</dd>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+              <dt class="text-[11px] text-slate-400">Tech Stack</dt>
+              <dd id="score-tech" class="text-sm font-bold font-mono text-white mt-0.5">--/30</dd>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+              <dt class="text-[11px] text-slate-400">Scope &amp; RAG</dt>
+              <dd id="score-clarity" class="text-sm font-bold font-mono text-white mt-0.5">--/20</dd>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+              <dt class="text-[11px] text-slate-400">Timeline</dt>
+              <dd id="score-timeline" class="text-sm font-bold font-mono text-white mt-0.5">--/15</dd>
+            </div>
+            <div class="col-span-2 sm:col-span-1 p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30">
+              <dt class="text-[11px] text-indigo-300">Token Savings</dt>
+              <dd id="cascade-savings" class="text-sm font-bold font-mono text-emerald-400 mt-0.5">--%</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- Interactive Slack Block Kit Simulator (Human-in-the-Loop Gate) -->
+        <section aria-labelledby="slack-heading" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400" id="hitl-lock-indicator"></span>
+              <h2 id="slack-heading" class="text-sm font-semibold uppercase tracking-wider text-slate-200">
+                Step 5: Slack Block Kit Simulator (Human-in-the-Loop Gate)
+              </h2>
+            </div>
+            <span id="hitl-status-badge" class="text-xs font-mono px-2.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              DISPATCH LOCKED (AWAITING HITL)
+            </span>
+          </div>
+
+          <!-- Simulated Slack Message Container -->
+          <div class="rounded-xl bg-[#1a1d21] border border-slate-700/80 p-4 space-y-3 text-slate-200 shadow-inner">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-indigo-600 text-[11px] font-bold text-white">APP</span>
+                <span class="text-xs font-bold text-white">ApexVector Triage Bot</span>
+                <span class="text-[11px] text-slate-400">in #sales-rfp-triage</span>
+              </div>
+              <span id="slack-timestamp" class="text-[11px] font-mono text-slate-400">--:-- UTC</span>
+            </div>
+
+            <!-- Slack Card Body -->
+            <div id="slack-card-body" class="space-y-3 text-xs">
+              <p class="text-slate-400 italic">
+                Run any RFP scenario above to generate the interactive Slack Block Kit triage card and commercial response draft.
+              </p>
+            </div>
+
+            <!-- Generated Proposal / Response Draft Preview -->
+            <div id="proposal-preview-container" class="hidden space-y-2 pt-2 border-t border-slate-800">
+              <div class="flex items-center justify-between">
+                <span id="proposal-subject-line" class="text-xs font-semibold text-indigo-300"></span>
+                <span id="proposal-model-tier" class="text-[11px] font-mono text-slate-400"></span>
+              </div>
+              <pre tabindex="0" class="rounded-lg bg-slate-950/90 border border-slate-800 p-3 text-xs font-sans whitespace-pre-wrap text-slate-200 max-h-60 overflow-y-auto custom-scroll"><code id="proposal-markdown-body"></code></pre>
+            </div>
+
+            <!-- Interactive HITL Buttons -->
+            <div id="hitl-action-buttons" class="hidden pt-2 flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                id="btn-approve-lead"
+                class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow"
+              >
+                Approve &amp; Dispatch Proposal
+              </button>
+              <button
+                type="button"
+                id="btn-open-edit-dialog"
+                class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-100 text-xs font-semibold transition"
+              >
+                Edit Draft Before Sending
+              </button>
+              <button
+                type="button"
+                id="btn-reject-lead"
+                class="px-3.5 py-2 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-semibold transition"
+              >
+                Reject &amp; Suppress Outbound
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Simulated HubSpot / Airtable CRM Audit Log -->
+        <section aria-labelledby="crm-heading" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 id="crm-heading" class="text-sm font-semibold uppercase tracking-wider text-slate-200">
+              Step 6: HubSpot CRM Deal Sync &amp; Governance Audit Log
+            </h2>
+            <span class="text-xs font-mono text-slate-400">Webhook: POST /api/lead/approve</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2 pr-3 font-medium">Audit ID</th>
+                  <th class="py-2 pr-3 font-medium">Company</th>
+                  <th class="py-2 pr-3 font-medium">HubSpot Deal Stage</th>
+                  <th class="py-2 pr-3 font-medium">HITL Gate</th>
+                  <th class="py-2 font-medium">Details</th>
+                </tr>
+              </thead>
+              <tbody id="crm-audit-tbody" class="divide-y divide-slate-800/70">
+                <tr>
+                  <td colspan="5" class="py-4 text-center text-slate-500">
+                    No CRM events recorded yet. Triage a lead above to populate the audit trail.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Native HTML5 Modal Dialog for Editing Proposal Draft (Compliant with modern-web-guidance) -->
+  <dialog id="edit-draft-dialog" aria-labelledby="dialog-title">
+    <div class="p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 id="dialog-title" class="text-base font-bold text-white">
+          Human-in-the-Loop — Edit Proposal Draft Before Dispatch
+        </h2>
+        <button
+          type="button"
+          commandfor="edit-draft-dialog"
+          command="close"
+          id="btn-close-dialog-top"
+          class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
+        >
+          Close (Esc)
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label for="reviewer-name-input" class="block text-xs font-medium text-slate-300 mb-1">
+            Approving Reviewer Name &amp; Role:
+          </label>
+          <input
+            type="text"
+            id="reviewer-name-input"
+            value="Principal AI Solutions Architect"
+            class="w-full rounded-lg bg-slate-950 border border-slate-700 text-xs text-white p-2.5"
+          >
+        </div>
+
+        <div>
+          <label for="edit-draft-textarea" class="block text-xs font-medium text-slate-300 mb-1">
+            Outbound Proposal / Clarification Body (Markdown):
+          </label>
+          <textarea
+            id="edit-draft-textarea"
+            rows="12"
+            class="w-full rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-slate-100 p-3 custom-scroll"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+        <button
+          type="button"
+          commandfor="edit-draft-dialog"
+          command="close"
+          id="btn-cancel-dialog"
+          class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="btn-save-and-approve-dialog"
+          class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold"
+        >
+          Save Changes &amp; Approve Dispatch
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <footer class="border-t border-slate-800/80 py-4 mt-8 text-center text-xs text-slate-400">
+    <p>ApexVector Labs — Autonomous B2B RFP &amp; Lead Triage Reference Architecture (FastAPI • n8n • OpenAI Structured Outputs • Vector RAG)</p>
+  </footer>
+
+  <script src="/static/js/dashboard.js" defer></script>
+</body>
+</html>

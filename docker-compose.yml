@@ -1,0 +1,71 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rfp-triage-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.example
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - CHROMA_PERSIST_DIR=/app/storage/vector_db
+      - KNOWLEDGE_BASE_PATH=/app/data/knowledge_base.json
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/rfp-ingest
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+      - vector_storage:/app/storage
+    depends_on:
+      chromadb:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - rfp-network
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: rfp-triage-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Europe/Warsaw
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    volumes:
+      - n8n_storage:/home/node/.n8n
+      - ./workflows:/home/node/workflows:ro
+      - ./data/mock_samples:/home/node/mock_samples:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - rfp-network
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: rfp-triage-vectordb
+    ports:
+      - "8001:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    volumes:
+      - chroma_data:/chroma/chroma
+    restart: unless-stopped
+    networks:
+      - rfp-network
+
+volumes:
+  n8n_storage:
+  vector_storage:
+  chroma_data:
+
+networks:
+  rfp-network:
+    driver: bridge

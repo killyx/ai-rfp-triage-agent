@@ -1,0 +1,22 @@
+Subject: Urgent quote needed - AI Marketplace + WordPress Plugin + iOS/Android App
+From: Kevin Miller <kevin@sneakerdropz-local.biz>
+Company: SneakerDropz Local LLC
+
+Hey team,
+
+We are launching a new peer-to-peer sneaker resale marketplace and need a full development agency to build the entire platform from scratch.
+
+Here is what we need built:
+1. A custom WordPress + WooCommerce website with custom PHP plugins for multi-vendor auctions.
+2. Native iOS and Android mobile apps with AR 3D sneaker try-on built in Unity3D.
+3. A custom AI price-prediction chatbot trained on our sneaker database.
+4. Automated payment splitting and escrow system.
+
+Timeline: We need everything launched and live in the App Store in 4 weeks before Black Friday.
+Budget: Our maximum total budget is $3,500 USD fixed price (we can also offer 2% equity if the app hits 1M users).
+
+Please send over a fixed-price contract today so we can start tomorrow.
+
+Best,
+Kevin Miller
+Founder, SneakerDropz Local LLC
