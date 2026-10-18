@@ -115,7 +115,9 @@ def render_text_to_pdf_file(text: str, output_path: str | Path, title: str = "B2
     out.parent.mkdir(parents=True, exist_ok=True)
 
     doc = fitz.open()
-    lines = text.splitlines()
+    safe_text = text.replace("—", "-").replace("–", "-").replace("•", "*")
+    safe_title = title.replace("—", "-").replace("–", "-")
+    lines = safe_text.splitlines()
     lines_per_page = 42
 
     for page_idx in range(0, max(1, len(lines)), lines_per_page):
@@ -124,7 +126,7 @@ def render_text_to_pdf_file(text: str, output_path: str | Path, title: str = "B2
         page.draw_rect(fitz.Rect(36, 28, 559, 62), color=(0.08, 0.12, 0.22), fill=(0.08, 0.12, 0.22))
         page.insert_text(
             fitz.Point(48, 49),
-            f"{title}  |  Page {(page_idx // lines_per_page) + 1}",
+            f"{safe_title}  |  Page {(page_idx // lines_per_page) + 1}",
             fontsize=10,
             fontname="helv",
             color=(0.92, 0.95, 1.0),
