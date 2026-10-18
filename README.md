@@ -1,15 +1,20 @@
 # Autonomous B2B RFP & Lead Triage Agent (with Human-in-the-Loop Governance)
 
+[![AI RFP Triage Pipeline CI](https://github.com/killyx/ai-rfp-triage-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/killyx/ai-rfp-triage-agent/actions/workflows/ci.yml)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688?logo=fastapi&logoColor=white)
 ![n8n Workflow](https://img.shields.io/badge/Orchestration-n8n-EA4B71?logo=n8n&logoColor=white)
 ![OpenAI Structured Outputs](https://img.shields.io/badge/OpenAI-Structured_Outputs-412991?logo=openai&logoColor=white)
 ![Vector RAG](https://img.shields.io/badge/RAG-ChromaDB_%2F_Hybrid_Vector-00ADD8)
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fkillyx%2Fai-rfp-triage-agent)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/killyx/ai-rfp-triage-agent)
+
 A production-grade reference architecture for **autonomous B2B Request for Proposal (RFP) qualification, RAG-grounded technical estimation, and Human-in-the-Loop (HITL) commercial sign-off**. Built as a flagship portfolio system for **AI Automation Specialist / Staff AI Solutions Engineer** roles.
 
 ![Animated E2E Walkthrough — AI RFP & Lead Triage Simulator](docs/demo_walkthrough.gif)
 
+> 🚀 **Live Interactive Simulator (Vercel):** **[https://ai-rfp-triage-agent.vercel.app](https://ai-rfp-triage-agent.vercel.app)**  
 > 🎥 **[Download Full HD Walkthrough Video (`docs/demo_walkthrough.mp4`)](docs/demo_walkthrough.mp4)** | 🖼️ **[High-Res Dashboard Screenshot (`docs/dashboard_preview.png`)](docs/dashboard_preview.png)**
 
 ---

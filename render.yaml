@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ai-rfp-triage-agent
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python scripts/seed_knowledge_base.py
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: MIN_BUDGET_USD
+        value: "10000"
+      - key: HIGH_FIT_SCORE_THRESHOLD
+        value: "75"

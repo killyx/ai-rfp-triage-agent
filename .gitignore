@@ -1,7 +1,9 @@
 .venv/
+.vercel/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .env
 .DS_Store
 storage/vector_db/chroma.sqlite3
+.vercel
